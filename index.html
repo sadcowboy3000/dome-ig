@@ -162,6 +162,11 @@
       <span class="range-val">100%</span>
     </div>
     <br>
+    <br>
+    <div class="toggle-row">
+      <div class="toggle" id="togBW" onclick="togFeature(this,'bwFilter')">B&amp;W FILTER</div>
+    </div>
+    <br>
     <div id="maskHint" class="hint">Upload an image to enable cell mask mode.</div>
     <div id="maskControls" style="display:none">
       <p class="hint active" style="margin-bottom:8px">Click cells on the canvas to reveal or hide image. Grid lines stay visible.</p>
@@ -336,7 +341,7 @@ let userImage   = null;
 // cellMask[ring][seg] = true means image is shown in that cell
 let cellMask    = [];
 
-const features = { showSwatches:true, showGradArc:true, showTicks:true, showNumbers:true, showText1:true, showText2:true, showImage:true, invertColors:false };
+const features = { showSwatches:true, showGradArc:true, showTicks:true, showNumbers:true, showText1:true, showText2:true, showImage:true, invertColors:false, bwFilter:false };
 let renderMode = 'normal'; // 'normal' | 'transparent'
 const FORMATS  = { square:{w:1080,h:1080}, portrait:{w:1080,h:1350}, story:{w:1080,h:1920} };
 let fmt = 'square';
@@ -543,9 +548,11 @@ function imgDrawParams(cx, cy, R, numRings) {
 
 function drawMaskedImage(cx, cy, R, numRings, numSegs) {
   const { ringStep, innerR, dw, dh } = imgDrawParams(cx, cy, R, numRings);
+  const imgFilter = features.bwFilter ? 'grayscale(100%)' : 'none';
 
   // Draw image in center hub circle
   ctx.save();
+  ctx.filter = imgFilter;
   ctx.beginPath();
   ctx.arc(cx, cy, innerR, 0, Math.PI*2);
   ctx.clip();
@@ -563,6 +570,7 @@ function drawMaskedImage(cx, cy, R, numRings, numSegs) {
       const a1 = ((s+1)/numSegs)*Math.PI*2 - Math.PI/2;
 
       ctx.save();
+      ctx.filter = imgFilter;
       ctx.beginPath();
       ctx.arc(cx, cy, r1, a0, a1);
       ctx.arc(cx, cy, r0, a1, a0, true);
@@ -960,6 +968,7 @@ function applySettings(s) {
     document.getElementById(id).classList.toggle('active', features[key]);
   });
   document.getElementById('togInvert').classList.toggle('active', features.invertColors);
+  document.getElementById('togBW').classList.toggle('active', features.bwFilter);
   if (s.fmt) {
     const fmtEl = document.querySelector(`[data-fmt="${s.fmt}"]`);
     if (fmtEl) setFormat(fmtEl, s.fmt); else render();
@@ -1089,6 +1098,17 @@ window.addEventListener('load', () => {
   setFormat(document.querySelector('[data-fmt="square"]'), 'square');
   loadSettings(null);
   renderPresetList();
+
+  // Load default image
+  const defaultImg = new Image();
+  defaultImg.onload = () => {
+    userImage = defaultImg;
+    resetMask();
+    document.getElementById('maskHint').style.display    = 'none';
+    document.getElementById('maskControls').style.display = 'block';
+    render();
+  };
+  defaultImg.src = 'assets/agnieszka_polska-the_happiest_thought_still_02.jpg';
 });
 </script>
 </body>
